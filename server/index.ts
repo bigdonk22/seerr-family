@@ -265,6 +265,9 @@ app
       }
     );
 
+    // I set an environment variable in Powershell Terminal to override the port to 5056
+    // $env:PORT=5056
+    // pnpm dev
     const port = Number(process.env.PORT) || 5055;
     const host = process.env.HOST;
     if (host) {

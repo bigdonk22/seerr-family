@@ -11,6 +11,7 @@ import type {
   GenreSliderItem,
   WatchlistResponse,
 } from '@server/interfaces/api/discoverInterfaces';
+import { filterResults } from '@server/lib/familyFilter';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
 import { mapProductionCompany } from '@server/models/Movie';
@@ -131,6 +132,8 @@ discoverRoutes.get('/movies', async (req, res, next) => {
       certificationCountry: query.certificationCountry,
     });
 
+    data.results = await filterResults(data.results);
+
     const media = await Media.getRelatedMedia(
       req.user,
       data.results.map((result) => ({
@@ -203,6 +206,8 @@ discoverRoutes.get<{ language: string }>(
         originalLanguage: req.params.language,
       });
 
+      data.results = await filterResults(data.results);
+
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -264,6 +269,7 @@ discoverRoutes.get<{ genreId: string }>(
         genre: req.params.genreId as string,
       });
 
+      data.results = await filterResults(data.results);
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -314,6 +320,8 @@ discoverRoutes.get<{ studioId: string }>(
         language: (req.query.language as string) ?? req.locale,
         studio: req.params.studioId as string,
       });
+
+      data.results = await filterResults(data.results);
 
       const media = await Media.getRelatedMedia(
         req.user,
@@ -368,6 +376,7 @@ discoverRoutes.get('/movies/upcoming', async (req, res, next) => {
       primaryReleaseDateGte: date,
     });
 
+    data.results = await filterResults(data.results);
     const media = await Media.getRelatedMedia(
       req.user,
       data.results.map((result) => ({
@@ -438,6 +447,8 @@ discoverRoutes.get('/tv', async (req, res, next) => {
       certificationLte: query.certificationLte,
       certificationCountry: query.certificationCountry,
     });
+
+    data.results = await filterResults(data.results);
 
     const media = await Media.getRelatedMedia(
       req.user,
@@ -510,6 +521,7 @@ discoverRoutes.get<{ language: string }>(
         originalLanguage: req.params.language,
       });
 
+      data.results = await filterResults(data.results);
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -571,6 +583,8 @@ discoverRoutes.get<{ genreId: string }>(
         genre: req.params.genreId,
       });
 
+      data.results = await filterResults(data.results);
+
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -621,6 +635,8 @@ discoverRoutes.get<{ networkId: string }>(
         language: (req.query.language as string) ?? req.locale,
         network: Number(req.params.networkId),
       });
+
+      data.results = await filterResults(data.results);
 
       const media = await Media.getRelatedMedia(
         req.user,
@@ -674,6 +690,8 @@ discoverRoutes.get('/tv/upcoming', async (req, res, next) => {
       language: (req.query.language as string) ?? req.locale,
       firstAirDateGte: date,
     });
+
+    data.results = await filterResults(data.results);
 
     const media = await Media.getRelatedMedia(
       req.user,

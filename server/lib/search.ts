@@ -10,6 +10,7 @@ import type {
   TmdbTvDetails,
   TmdbTvResult,
 } from '@server/api/themoviedb/interfaces';
+import { filterResults } from '@server/lib/familyFilter';
 import {
   mapMovieDetailsToResult,
   mapPersonDetailsToResult,
@@ -81,11 +82,13 @@ searchProviders.push({
       );
     }
 
+    const filteredResults = await filterResults(results);
+
     return {
       page: 1,
       total_pages: 1,
-      total_results: results.length,
-      results,
+      total_results: filteredResults.length,
+      results: filteredResults,
     };
   },
 });
@@ -119,11 +122,13 @@ searchProviders.push({
       })) as TmdbPersonResult[])
     );
 
+    const filteredResults = await filterResults(results);
+
     return {
       page: 1,
       total_pages: 1,
-      total_results: results.length,
-      results,
+      total_results: filteredResults.length,
+      results: filteredResults,
     };
   },
 });
@@ -157,11 +162,13 @@ searchProviders.push({
       })) as TmdbPersonResult[])
     );
 
+    const filteredResults = await filterResults(results);
+
     return {
       page: 1,
       total_pages: 1,
-      total_results: results.length,
-      results,
+      total_results: filteredResults.length,
+      results: filteredResults,
     };
   },
 });
@@ -194,7 +201,6 @@ searchProviders.push({
     if (successfulResponses.length) {
       successfulResponses.forEach((response) => {
         response.value.results.forEach((result) =>
-          // set the media_type here since the search endpoints don't return it
           results.push(
             isMovie(result)
               ? { ...result, media_type: 'movie' }
@@ -204,11 +210,13 @@ searchProviders.push({
       });
     }
 
+    const filteredResults = await filterResults(results);
+
     return {
       page: 1,
       total_pages: 1,
-      total_results: results.length,
-      results,
+      total_results: filteredResults.length,
+      results: filteredResults,
     };
   },
 });

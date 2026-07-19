@@ -1,6 +1,8 @@
 import ExternalAPI from '@server/api/externalapi';
 import type { TvShowProvider } from '@server/api/provider';
 import cacheManager from '@server/lib/cache';
+import { CertificationService } from '@server/lib/certificationService';
+import { filterResults } from '@server/lib/familyFilter';
 import { getSettings } from '@server/lib/settings';
 import { sortBy } from 'lodash';
 import type {
@@ -150,6 +152,13 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
     this.originalLanguage = originalLanguage;
   }
 
+  private async filterResponse<T extends { results: any[] }>(
+    response: T
+  ): Promise<T> {
+    response.results = await filterResults(response.results);
+    return response;
+  }
+
   public searchMulti = async ({
     query,
     page = 1,
@@ -158,10 +167,15 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
   }: SearchOptions): Promise<TmdbSearchMultiResponse> => {
     try {
       const data = await this.get<TmdbSearchMultiResponse>('/search/multi', {
-        params: { query, page, include_adult: includeAdult, language },
+        params: {
+          query,
+          page,
+          include_adult: includeAdult,
+          language,
+        },
       });
 
-      return data;
+      return await this.filterResponse(data);
     } catch {
       return {
         page: 1,
@@ -333,6 +347,14 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
         }
       }
 
+      const cert = CertificationService.getMovieCertification(data);
+
+      console.log(
+        `[FamilyFilter] Movie "${data.title}" certification: ${
+          cert?.certification ?? 'NONE'
+        }`
+      );
+
       return data;
     } catch (e) {
       throw new Error(`[TMDB] Failed to fetch movie details: ${e.message}`, {
@@ -399,6 +421,12 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
           // Ignore trailer fallback failures; return the original data.
         }
       }
+
+      const cert = CertificationService.getTvCertification(data);
+
+      console.log(
+        `[FamilyFilter] TV "${data.name}" rating: ${cert?.rating ?? 'NONE'}`
+      );
 
       return data;
     } catch (e) {
