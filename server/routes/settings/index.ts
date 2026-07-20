@@ -70,16 +70,29 @@ settingsRoutes.get('/main', (req, res, next) => {
     return next({ status: 400, message: 'User missing from request.' });
   }
 
-  res.status(200).json(filteredMainSettings(req.user, settings.main));
+  res.status(200).json({
+    ...filteredMainSettings(req.user, settings.main),
+    familyFilter: settings.familyFilter,
+  });
 });
 
 settingsRoutes.post('/main', async (req, res) => {
   const settings = getSettings();
 
-  settings.main = merge(settings.main, req.body);
+  const { familyFilter, ...mainSettings } = req.body;
+
+  settings.main = merge(settings.main, mainSettings);
+
+  if (familyFilter) {
+    settings.familyFilter = merge(settings.familyFilter, familyFilter);
+  }
+
   await settings.save();
 
-  return res.status(200).json(settings.main);
+  return res.status(200).json({
+    ...settings.main,
+    familyFilter: settings.familyFilter,
+  });
 });
 
 settingsRoutes.get('/network', (req, res) => {

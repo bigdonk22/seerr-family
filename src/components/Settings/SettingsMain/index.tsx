@@ -17,7 +17,7 @@ import { isValidURL } from '@app/utils/urlValidationHelper';
 import { ArrowDownOnSquareIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon } from '@heroicons/react/24/solid';
 import type { UserSettingsGeneralResponse } from '@server/interfaces/api/userSettingsInterfaces';
-import type { MainSettings } from '@server/lib/settings';
+import type { MainSettingsResponse } from '@server/lib/settings';
 import type { AvailableLocale } from '@server/types/languages';
 import axios from 'axios';
 import { Field, Form, Formik } from 'formik';
@@ -87,7 +87,7 @@ const SettingsMain = () => {
     data,
     error,
     mutate: revalidate,
-  } = useSWR<MainSettings>('/api/v1/settings/main');
+  } = useSWR<MainSettingsResponse>('/api/v1/settings/main');
   const { data: userData } = useSWR<UserSettingsGeneralResponse>(
     currentUser ? `/api/v1/user/${currentUser.id}/settings/main` : null
   );
@@ -183,6 +183,23 @@ const SettingsMain = () => {
             enableSpecialEpisodes: data?.enableSpecialEpisodes,
             cacheImages: data?.cacheImages,
             youtubeUrl: data?.youtubeUrl,
+            familyFilter: {
+              enabled: data?.familyFilter?.enabled ?? false,
+              allowedMovieRatings: data?.familyFilter?.allowedMovieRatings ?? [
+                'G',
+                'PG',
+                'PG-13',
+              ],
+              allowedTvRatings: data?.familyFilter?.allowedTvRatings ?? [
+                'TV-Y',
+                'TV-Y7',
+                'TV-G',
+                'TV-PG',
+              ],
+              blockUnratedMovies:
+                data?.familyFilter?.blockUnratedMovies ?? true,
+              blockUnratedTv: data?.familyFilter?.blockUnratedTv ?? true,
+            },
           }}
           enableReinitialize
           validationSchema={MainSettingsSchema}
@@ -205,6 +222,7 @@ const SettingsMain = () => {
                 enableSpecialEpisodes: values.enableSpecialEpisodes,
                 cacheImages: values.cacheImages,
                 youtubeUrl: values.youtubeUrl,
+                familyFilter: values.familyFilter,
               });
               mutate('/api/v1/settings/public');
               mutate('/api/v1/status');
