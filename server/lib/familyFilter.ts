@@ -5,29 +5,9 @@
  * The filter itself knows nothing about where settings come from.
  */
 
+import TheMovieDb from '@server/api/themoviedb';
+import { getSettings, type FamilyFilterSettings } from '@server/lib/settings';
 import { CertificationService } from './certificationService';
-
-export interface FamilyFilterSettings {
-  /**
-   * Master enable/disable switch.
-   */
-  enabled: boolean;
-
-  /**
-   * Allow TMDb "adult" results.
-   */
-  allowAdult: boolean;
-
-  /**
-   * Allowed movie certifications.
-   */
-  allowedMovieRatings: string[];
-
-  /**
-   * Allowed TV parental ratings.
-   */
-  allowedTvRatings: string[];
-}
 
 /**
  * Interface for retrieving family filter settings.
@@ -40,34 +20,14 @@ export interface FamilyFilterProvider {
   getSettings(): FamilyFilterSettings;
 }
 
-/**
- * Default settings.
- */
-const defaultSettings: FamilyFilterSettings = {
-  enabled: true,
-
-  allowAdult: false,
-
-  allowedMovieRatings: ['G', 'PG', 'PG-13'],
-
-  allowedTvRatings: ['TV-Y', 'TV-Y7', 'TV-G', 'TV-PG'],
-};
-
 export interface TmdbResult {
   id: number;
-
   media_type?: string;
-
   adult?: boolean;
-
   title?: string;
-
   name?: string;
-
   genre_ids?: number[];
-
   release_dates?: any;
-
   content_ratings?: any;
 }
 
@@ -78,7 +38,7 @@ export interface TmdbResult {
  */
 export class DefaultFamilyFilterProvider implements FamilyFilterProvider {
   public getSettings(): FamilyFilterSettings {
-    return defaultSettings;
+    return getSettings().familyFilter;
   }
 }
 
@@ -115,6 +75,10 @@ export async function filterResults<T extends TmdbResult>(
     filtered.push(item);
   }
 
+  console.log(
+    `[FamilyFilter] Filtered ${results.length} -> ${filtered.length}`
+  );
+
   return filtered;
 }
 
@@ -139,13 +103,20 @@ async function filterMovieRatings(
     return true;
   }
 
-  const rating = CertificationService.getMovieCertification(item as any);
+  const tmdb = new TheMovieDb();
+
+  const details = await tmdb.getMovie({
+    movieId: item.id,
+  });
+
+  const rating = CertificationService.getMovieCertification(details);
 
   if (!rating) {
-    console.log('[FamilyFilter] No movie rating');
-    return true;
+    return !settings.blockUnratedMovies;
   }
 
+  // Only allow G, PG, PG-13
+  //const allowed = ['G', 'PG', 'PG-13'].includes(rating.certification);
   const allowed = settings.allowedMovieRatings.includes(rating.certification);
 
   console.log(
@@ -166,11 +137,21 @@ async function filterTvRatings(
     return true;
   }
 
-  const rating = CertificationService.getTvCertification(item as any);
+  const tmdb = new TheMovieDb();
+
+  const details = await tmdb.getTvShow({
+    tvId: item.id,
+  });
+
+  const rating = CertificationService.getTvCertification(details);
 
   if (!rating) {
-    return true;
+    return !settings.blockUnratedTv;
   }
 
-  return settings.allowedTvRatings.includes(rating.rating);
+  const allowed = settings.allowedTvRatings.includes(rating.rating);
+
+  console.log(`[FamilyFilter] ${item.name} -> ${rating.rating} -> ${allowed}`);
+
+  return allowed;
 }

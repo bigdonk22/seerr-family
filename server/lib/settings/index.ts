@@ -158,6 +158,15 @@ export interface MainSettings {
   youtubeUrl: string;
 }
 
+export interface FamilyFilterSettings {
+  enabled: boolean;
+  allowedMovieRatings: string[];
+  allowedTvRatings: string[];
+  blockUnratedMovies: boolean;
+  blockUnratedTv: boolean;
+  allowAdult: boolean;
+}
+
 export interface ProxySettings {
   enabled: boolean;
   hostname: string;
@@ -375,6 +384,7 @@ export interface AllSettings {
   vapidPublic: string;
   vapidPrivate: string;
   main: MainSettings;
+  familyFilter: FamilyFilterSettings;
   plex: PlexSettings;
   jellyfin: JellyfinSettings;
   tautulli: TautulliSettings;
@@ -429,6 +439,17 @@ class Settings {
         enableSpecialEpisodes: false,
         locale: 'en',
         youtubeUrl: '',
+      },
+      familyFilter: {
+        enabled: false,
+
+        allowedMovieRatings: ['G', 'PG', 'PG-13'],
+
+        allowedTvRatings: ['TV-Y', 'TV-Y7', 'TV-G', 'TV-PG'],
+
+        blockUnratedMovies: true,
+        blockUnratedTv: true,
+        allowAdult: false,
       },
       plex: {
         name: '',
@@ -692,6 +713,14 @@ class Settings {
 
   set sonarr(data: SonarrSettings[]) {
     this.data.sonarr = data;
+  }
+
+  get familyFilter(): FamilyFilterSettings {
+    return this.data.familyFilter;
+  }
+
+  set familyFilter(data: FamilyFilterSettings) {
+    this.data.familyFilter = data;
   }
 
   get public(): PublicSettings {
