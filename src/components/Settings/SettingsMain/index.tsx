@@ -25,6 +25,10 @@ import { useIntl } from 'react-intl';
 import useSWR, { mutate } from 'swr';
 import * as Yup from 'yup';
 
+const movieRatings = ['G', 'PG', 'PG-13', 'R', 'NC-17'];
+
+const tvRatings = ['TV-Y', 'TV-Y7', 'TV-G', 'TV-PG', 'TV-14', 'TV-MA'];
+
 const messages = defineMessages('components.Settings.SettingsMain', {
   general: 'General',
   generalsettings: 'General Settings',
@@ -625,6 +629,131 @@ const SettingsMain = () => {
                       )}
                   </div>
                 </div>
+                <div className="mt-8 border-t border-gray-700 pt-6">
+                  <h3 className="heading">Family Filter</h3>
+                  <p className="description">
+                    Restrict what content appears throughout Seerr.
+                  </p>
+                </div>
+                <div className="form-row">
+                  <label
+                    htmlFor="familyFilter.enabled"
+                    className="checkbox-label"
+                  >
+                    Enable Family Filter
+                  </label>
+
+                  <div className="form-input-area">
+                    <Field
+                      type="checkbox"
+                      id="familyFilter.enabled"
+                      name="familyFilter.enabled"
+                    />
+                  </div>
+                </div>
+                <fieldset className="form-row">
+                  <legend className="text-label">Allowed Movie Ratings</legend>
+
+                  <div className="form-input-area space-y-2">
+                    {movieRatings.map((rating) => (
+                      <label key={rating} className="flex items-center gap-2">
+                        <Field
+                          type="checkbox"
+                          checked={values.familyFilter.allowedMovieRatings.includes(
+                            rating
+                          )}
+                          onChange={() => {
+                            const ratings = [
+                              ...values.familyFilter.allowedMovieRatings,
+                            ];
+
+                            if (ratings.includes(rating)) {
+                              setFieldValue(
+                                'familyFilter.allowedMovieRatings',
+                                ratings.filter((r) => r !== rating)
+                              );
+                            } else {
+                              setFieldValue(
+                                'familyFilter.allowedMovieRatings',
+                                [...ratings, rating]
+                              );
+                            }
+                          }}
+                        />
+
+                        {rating}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset className="form-row">
+                  <legend className="text-label">Allowed TV Ratings</legend>
+
+                  <div className="form-input-area space-y-2">
+                    {tvRatings.map((rating) => (
+                      <label key={rating} className="flex items-center gap-2">
+                        <Field
+                          type="checkbox"
+                          checked={values.familyFilter.allowedTvRatings.includes(
+                            rating
+                          )}
+                          onChange={() => {
+                            const ratings = [
+                              ...values.familyFilter.allowedTvRatings,
+                            ];
+
+                            if (ratings.includes(rating)) {
+                              setFieldValue(
+                                'familyFilter.allowedTvRatings',
+                                ratings.filter((r) => r !== rating)
+                              );
+                            } else {
+                              setFieldValue('familyFilter.allowedTvRatings', [
+                                ...ratings,
+                                rating,
+                              ]);
+                            }
+                          }}
+                        />
+
+                        {rating}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="form-row">
+                  <label
+                    htmlFor="familyFilter.blockUnratedMovies"
+                    className="checkbox-label"
+                  >
+                    Block unrated movies
+                  </label>
+
+                  <div className="form-input-area">
+                    <Field
+                      type="checkbox"
+                      id="familyFilter.blockUnratedMovies"
+                      name="familyFilter.blockUnratedMovies"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label
+                    htmlFor="familyFilter.blockUnratedTv"
+                    className="checkbox-label"
+                  >
+                    Block unrated TV
+                  </label>
+
+                  <div className="form-input-area">
+                    <Field
+                      type="checkbox"
+                      id="familyFilter.blockUnratedTv"
+                      name="familyFilter.blockUnratedTv"
+                    />
+                  </div>
+                </div>
+
                 <div className="actions">
                   <div className="flex justify-end">
                     <span className="ml-3 inline-flex rounded-md shadow-sm">
