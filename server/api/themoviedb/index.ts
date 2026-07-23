@@ -2,7 +2,6 @@ import ExternalAPI from '@server/api/externalapi';
 import type { TvShowProvider } from '@server/api/provider';
 import cacheManager from '@server/lib/cache';
 import { CertificationService } from '@server/lib/certificationService';
-import { filterResults } from '@server/lib/familyFilter';
 import { getSettings } from '@server/lib/settings';
 import { sortBy } from 'lodash';
 import type {
@@ -155,7 +154,6 @@ class TheMovieDb extends ExternalAPI implements TvShowProvider {
   private async filterResponse<T extends { results: any[] }>(
     response: T
   ): Promise<T> {
-    response.results = await filterResults(response.results);
     return response;
   }
 

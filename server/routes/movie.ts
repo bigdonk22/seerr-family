@@ -8,7 +8,9 @@ import Media from '@server/entity/Media';
 import { Watchlist } from '@server/entity/Watchlist';
 import logger from '@server/logger';
 import { mapMovieDetails } from '@server/models/Movie';
-import { mapMovieResult } from '@server/models/Search';
+//import { mapMovieResult } from '@server/models/Search';
+//import { filterMixedResults } from '@server/lib/familyFilter';
+import { filterResults } from '@server/lib/familyFilter';
 import { Router } from 'express';
 
 const movieRoutes = Router();
@@ -21,6 +23,23 @@ movieRoutes.get('/:id', async (req, res, next) => {
       movieId: Number(req.params.id),
       language: (req.query.language as string) ?? req.locale,
     });
+
+    console.log(`[Movie Route] ${tmdbMovie.title}`);
+
+    const allowed = await filterResults([
+      {
+        ...tmdbMovie,
+        media_type: 'movie',
+      },
+    ]);
+
+    if (allowed.length === 0) {
+      console.log(`[Movie Route] BLOCKED ${tmdbMovie.title}`);
+
+      return res.status(404).json({
+        message: 'Movie not found',
+      });
+    }
 
     const media = await Media.getMedia(tmdbMovie.id, MediaType.MOVIE);
 
@@ -36,10 +55,12 @@ movieRoutes.get('/:id', async (req, res, next) => {
 
     const data = mapMovieDetails(tmdbMovie, media, onUserWatchlist);
 
-    // TMDB issue where it doesnt fallback to English when no overview is available in requested locale.
+    // TMDB issue where it doesn't fall back to English
     if (!data.overview) {
-      const tvEnglish = await tmdb.getMovie({ movieId: Number(req.params.id) });
-      data.overview = tvEnglish.overview;
+      const movieEnglish = await tmdb.getMovie({
+        movieId: Number(req.params.id),
+      });
+      data.overview = movieEnglish.overview;
     }
 
     return res.status(200).json(data);
@@ -49,6 +70,7 @@ movieRoutes.get('/:id', async (req, res, next) => {
       errorMessage: e.message,
       movieId: req.params.id,
     });
+
     return next({
       status: 500,
       message: 'Unable to retrieve movie.',
@@ -66,27 +88,13 @@ movieRoutes.get('/:id/recommendations', async (req, res, next) => {
       language: (req.query.language as string) ?? req.locale,
     });
 
-    const media = await Media.getRelatedMedia(
-      req.user,
-      results.results.map((result) => ({
-        tmdbId: result.id,
-        mediaType: MediaType.MOVIE,
-      }))
-    );
+    results.results = await filterResults(results.results);
 
     return res.status(200).json({
       page: results.page,
       totalPages: results.total_pages,
       totalResults: results.total_results,
-      results: results.results.map((result) =>
-        mapMovieResult(
-          result,
-          media.find(
-            (req) =>
-              req.tmdbId === result.id && req.mediaType === MediaType.MOVIE
-          )
-        )
-      ),
+      results: results.results,
     });
   } catch (e) {
     logger.debug('Something went wrong retrieving movie recommendations', {
@@ -111,27 +119,13 @@ movieRoutes.get('/:id/similar', async (req, res, next) => {
       language: (req.query.language as string) ?? req.locale,
     });
 
-    const media = await Media.getRelatedMedia(
-      req.user,
-      results.results.map((result) => ({
-        tmdbId: result.id,
-        mediaType: MediaType.MOVIE,
-      }))
-    );
+    results.results = await filterResults(results.results);
 
     return res.status(200).json({
       page: results.page,
       totalPages: results.total_pages,
       totalResults: results.total_results,
-      results: results.results.map((result) =>
-        mapMovieResult(
-          result,
-          media.find(
-            (req) =>
-              req.tmdbId === result.id && req.mediaType === MediaType.MOVIE
-          )
-        )
-      ),
+      results: results.results,
     });
   } catch (e) {
     logger.debug('Something went wrong retrieving similar movies', {

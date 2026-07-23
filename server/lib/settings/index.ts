@@ -158,6 +158,10 @@ export interface MainSettings {
   youtubeUrl: string;
 }
 
+export interface MainSettingsResponse extends MainSettings {
+  familyFilter: FamilyFilterSettings;
+}
+
 export interface FamilyFilterSettings {
   enabled: boolean;
   allowedMovieRatings: string[];

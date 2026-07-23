@@ -78,13 +78,12 @@ settingsRoutes.get('/main', (req, res, next) => {
 
 settingsRoutes.post('/main', async (req, res) => {
   const settings = getSettings();
-
   const { familyFilter, ...mainSettings } = req.body;
 
-  settings.main = merge(settings.main, mainSettings);
+  settings.main = mainSettings;
 
   if (familyFilter) {
-    settings.familyFilter = merge(settings.familyFilter, familyFilter);
+    settings.familyFilter = familyFilter;
   }
 
   await settings.save();

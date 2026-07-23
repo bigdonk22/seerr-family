@@ -60,24 +60,39 @@ export async function filterResults<T extends TmdbResult>(
   const filtered: T[] = [];
 
   for (const item of results) {
+    // Adult filter
     if (!filterAdult(item, settings)) {
       continue;
     }
 
-    if (!(await filterMovieRatings(item, settings))) {
-      continue;
+    const mediaType = item.media_type;
+
+    if (mediaType === 'movie') {
+      const allowed = await filterMovieRatings(item, settings);
+
+      console.log(
+        `[Movie Filter] ${'title' in item ? item.title : item.id} -> ${allowed}`
+      );
+
+      if (!allowed) {
+        continue;
+      }
     }
 
-    if (!(await filterTvRatings(item, settings))) {
-      continue;
+    if (mediaType === 'tv') {
+      const allowed = await filterTvRatings(item, settings);
+
+      console.log(
+        `[TV Filter] ${'name' in item ? item.name : item.id} -> ${allowed}`
+      );
+
+      if (!allowed) {
+        continue;
+      }
     }
 
     filtered.push(item);
   }
-
-  console.log(
-    `[FamilyFilter] Filtered ${results.length} -> ${filtered.length}`
-  );
 
   return filtered;
 }
@@ -99,29 +114,28 @@ async function filterMovieRatings(
   item: TmdbResult,
   settings: FamilyFilterSettings
 ): Promise<boolean> {
-  if (item.media_type !== 'movie') {
-    return true;
+  let certification: string | undefined;
+
+  // Already have movie details
+  if ('release_dates' in item) {
+    const rating = CertificationService.getMovieCertification(item);
+    certification = rating?.certification;
+  } else {
+    const tmdb = new TheMovieDb();
+
+    const details = await tmdb.getMovie({
+      movieId: item.id,
+    });
+
+    const rating = CertificationService.getMovieCertification(details);
+    certification = rating?.certification;
   }
 
-  const tmdb = new TheMovieDb();
-
-  const details = await tmdb.getMovie({
-    movieId: item.id,
-  });
-
-  const rating = CertificationService.getMovieCertification(details);
-
-  if (!rating) {
+  if (!certification) {
     return !settings.blockUnratedMovies;
   }
 
-  // Only allow G, PG, PG-13
-  //const allowed = ['G', 'PG', 'PG-13'].includes(rating.certification);
-  const allowed = settings.allowedMovieRatings.includes(rating.certification);
-
-  console.log(
-    `[FamilyFilter] ${item.title} -> ${rating.certification} -> ${allowed}`
-  );
+  const allowed = settings.allowedMovieRatings.includes(certification);
 
   return allowed;
 }
@@ -133,25 +147,29 @@ async function filterTvRatings(
   item: TmdbResult,
   settings: FamilyFilterSettings
 ): Promise<boolean> {
-  if (item.media_type !== 'tv') {
-    return true;
+  let certification: string | undefined;
+
+  if ('content_ratings' in item) {
+    const rating = CertificationService.getTvCertification(item);
+    certification = rating?.rating;
+  } else {
+    const tmdb = new TheMovieDb();
+
+    const details = await tmdb.getTvShow({
+      tvId: item.id,
+    });
+
+    const rating = CertificationService.getTvCertification(details);
+    certification = rating?.rating;
   }
 
-  const tmdb = new TheMovieDb();
-
-  const details = await tmdb.getTvShow({
-    tvId: item.id,
-  });
-
-  const rating = CertificationService.getTvCertification(details);
-
-  if (!rating) {
+  if (!certification) {
     return !settings.blockUnratedTv;
   }
 
-  const allowed = settings.allowedTvRatings.includes(rating.rating);
+  const allowed = settings.allowedTvRatings.includes(certification);
 
-  console.log(`[FamilyFilter] ${item.name} -> ${rating.rating} -> ${allowed}`);
+  console.log(`[TV Rating] ${item.name} ${certification} allowed=${allowed}`);
 
   return allowed;
 }

@@ -5,6 +5,7 @@ import { filterResults } from '@server/lib/familyFilter';
 import { findSearchProvider } from '@server/lib/search';
 import logger from '@server/logger';
 import { mapSearchResults } from '@server/models/Search';
+
 import { Router } from 'express';
 
 const searchRoutes = Router();
@@ -34,12 +35,11 @@ searchRoutes.get('/', async (req, res, next) => {
       });
     }
 
-    results.results = await filterResults(results.results);
-    results.total_results = results.results.length;
+    //const beforeCount = results.results.length;
 
-    console.log(
-      `[Route Filter] ${results.total_results} -> ${results.results.length}`
-    );
+    results.results = await filterResults(results.results);
+
+    results.total_results = results.results.length;
 
     const media = await Media.getRelatedMedia(
       req.user,

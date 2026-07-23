@@ -131,9 +131,9 @@ discoverRoutes.get('/movies', async (req, res, next) => {
       certificationLte: query.certificationLte,
       certificationCountry: query.certificationCountry,
     });
-
+    console.log('DISCOVER MOVIES BEFORE', data.results.length);
     data.results = await filterResults(data.results);
-
+    console.log('DISCOVER MOVIES AFTER', data.results.length);
     const media = await Media.getRelatedMedia(
       req.user,
       data.results.map((result) => ({
@@ -160,7 +160,7 @@ discoverRoutes.get('/movies', async (req, res, next) => {
     return res.status(200).json({
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: data.results.length,
       keywords: keywordData,
       results: data.results.map((result) =>
         mapMovieResult(
@@ -207,7 +207,6 @@ discoverRoutes.get<{ language: string }>(
       });
 
       data.results = await filterResults(data.results);
-
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -219,7 +218,7 @@ discoverRoutes.get<{ language: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         language,
         results: data.results.map((result) =>
           mapMovieResult(
@@ -281,7 +280,7 @@ discoverRoutes.get<{ genreId: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         genre,
         results: data.results.map((result) =>
           mapMovieResult(
@@ -322,7 +321,6 @@ discoverRoutes.get<{ studioId: string }>(
       });
 
       data.results = await filterResults(data.results);
-
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -334,7 +332,7 @@ discoverRoutes.get<{ studioId: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         studio: mapProductionCompany(studio),
         results: data.results.map((result) =>
           mapMovieResult(
@@ -388,7 +386,7 @@ discoverRoutes.get('/movies/upcoming', async (req, res, next) => {
     return res.status(200).json({
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: data.results.length,
       results: data.results.map((result) =>
         mapMovieResult(
           result,
@@ -447,8 +445,9 @@ discoverRoutes.get('/tv', async (req, res, next) => {
       certificationLte: query.certificationLte,
       certificationCountry: query.certificationCountry,
     });
-
+    console.log('DISCOVER TV BEFORE', data.results.length);
     data.results = await filterResults(data.results);
+    console.log('DISCOVER TV AFTER', data.results.length);
 
     const media = await Media.getRelatedMedia(
       req.user,
@@ -476,7 +475,7 @@ discoverRoutes.get('/tv', async (req, res, next) => {
     return res.status(200).json({
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: data.results.length,
       keywords: keywordData,
       results: data.results.map((result) =>
         mapTvResult(
@@ -533,7 +532,7 @@ discoverRoutes.get<{ language: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         language,
         results: data.results.map((result) =>
           mapTvResult(
@@ -584,7 +583,6 @@ discoverRoutes.get<{ genreId: string }>(
       });
 
       data.results = await filterResults(data.results);
-
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -596,7 +594,7 @@ discoverRoutes.get<{ genreId: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         genre,
         results: data.results.map((result) =>
           mapTvResult(
@@ -637,7 +635,6 @@ discoverRoutes.get<{ networkId: string }>(
       });
 
       data.results = await filterResults(data.results);
-
       const media = await Media.getRelatedMedia(
         req.user,
         data.results.map((result) => ({
@@ -649,7 +646,7 @@ discoverRoutes.get<{ networkId: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         network: mapNetwork(network),
         results: data.results.map((result) =>
           mapTvResult(
@@ -692,7 +689,6 @@ discoverRoutes.get('/tv/upcoming', async (req, res, next) => {
     });
 
     data.results = await filterResults(data.results);
-
     const media = await Media.getRelatedMedia(
       req.user,
       data.results.map((result) => ({
@@ -704,7 +700,7 @@ discoverRoutes.get('/tv/upcoming', async (req, res, next) => {
     return res.status(200).json({
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: data.results.length,
       results: data.results.map((result) =>
         mapTvResult(
           result,
@@ -766,6 +762,8 @@ discoverRoutes.get('/trending', async (req, res, next) => {
 
     const { data, mapper, type } = await trendingFetchers[mediaType]();
 
+    data.results = await filterResults(data.results);
+
     const media = await Media.getRelatedMedia(
       req.user,
       data.results.map((result) => ({
@@ -777,7 +775,7 @@ discoverRoutes.get('/trending', async (req, res, next) => {
     return res.status(200).json({
       page: data.page,
       totalPages: data.total_pages,
-      totalResults: data.total_results,
+      totalResults: data.results.length,
       results: data.results.map((result) => {
         // - If "type" is set (case: "movie" or "tv"), the mediaType must also match.
         // - If "type" is not set (case: "all"), only filter by tmdbId.
@@ -824,7 +822,7 @@ discoverRoutes.get<{ keywordId: string }>(
       return res.status(200).json({
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
+        totalResults: data.results.length,
         results: data.results.map((result) =>
           mapMovieResult(
             result,

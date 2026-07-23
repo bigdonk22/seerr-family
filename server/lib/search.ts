@@ -10,7 +10,6 @@ import type {
   TmdbTvDetails,
   TmdbTvResult,
 } from '@server/api/themoviedb/interfaces';
-import { filterResults } from '@server/lib/familyFilter';
 import {
   mapMovieDetailsToResult,
   mapPersonDetailsToResult,
@@ -82,17 +81,11 @@ searchProviders.push({
       );
     }
 
-    const filteredResults = await filterResults(results);
-
-    console.log('[Search] Returning', filteredResults.length, 'results');
-
-    console.log(JSON.stringify(filteredResults, null, 2));
-
     return {
       page: 1,
       total_pages: 1,
-      total_results: filteredResults.length,
-      results: filteredResults,
+      total_results: results.length,
+      results,
     };
   },
 });
@@ -126,17 +119,11 @@ searchProviders.push({
       })) as TmdbPersonResult[])
     );
 
-    const filteredResults = await filterResults(results);
-
-    console.log('[Search] Returning', filteredResults.length, 'results');
-
-    console.log(JSON.stringify(filteredResults, null, 2));
-
     return {
       page: 1,
       total_pages: 1,
-      total_results: filteredResults.length,
-      results: filteredResults,
+      total_results: results.length,
+      results,
     };
   },
 });
@@ -170,17 +157,11 @@ searchProviders.push({
       })) as TmdbPersonResult[])
     );
 
-    const filteredResults = await filterResults(results);
-
-    console.log('[Search] Returning', filteredResults.length, 'results');
-
-    console.log(JSON.stringify(filteredResults, null, 2));
-
     return {
       page: 1,
       total_pages: 1,
-      total_results: filteredResults.length,
-      results: filteredResults,
+      total_results: results.length,
+      results,
     };
   },
 });
@@ -222,17 +203,11 @@ searchProviders.push({
       });
     }
 
-    const filteredResults = await filterResults(results);
-
-    console.log('[Search] Returning', filteredResults.length, 'results');
-
-    console.log(JSON.stringify(filteredResults, null, 2));
-
     return {
       page: 1,
       total_pages: 1,
-      total_results: filteredResults.length,
-      results: filteredResults,
+      total_results: results.length,
+      results,
     };
   },
 });
