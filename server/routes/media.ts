@@ -11,6 +11,7 @@ import type {
   MediaResultsResponse,
   MediaWatchDataResponse,
 } from '@server/interfaces/api/mediaInterfaces';
+import { filterMediaByTmdbId } from '@server/lib/familyFilter';
 import { Permission } from '@server/lib/permissions';
 import { getSettings } from '@server/lib/settings';
 import logger from '@server/logger';
@@ -18,6 +19,7 @@ import { isAuthenticated } from '@server/middleware/auth';
 import { Router } from 'express';
 import type { FindOneOptions } from 'typeorm';
 import { EntityNotFoundError, In, IsNull, Not } from 'typeorm';
+import { createTmdbWithRegionLanguage } from './discover';
 
 const mediaRoutes = Router();
 
@@ -75,20 +77,25 @@ mediaRoutes.get('/', async (req, res, next) => {
   }
 
   try {
+    const tmdb = createTmdbWithRegionLanguage(req.user);
+
     const [media, mediaCount] = await mediaRepository.findAndCount({
       order: sortFilter,
       where: whereClause,
       take: pageSize,
       skip,
     });
+
+    const filtered = await filterMediaByTmdbId(media, tmdb);
+
     return res.status(200).json({
       pageInfo: {
-        pages: Math.ceil(mediaCount / pageSize),
+        pages: Math.ceil(filtered.length / pageSize),
         pageSize,
-        results: mediaCount,
-        page: Math.ceil(skip / pageSize) + 1,
+        results: filtered.length,
+        page: Math.ceil(mediaCount / pageSize),
       },
-      results: media,
+      results: filtered,
     } as MediaResultsResponse);
   } catch (e) {
     next({ status: 500, message: e.message });

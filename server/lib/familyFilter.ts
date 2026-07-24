@@ -45,8 +45,29 @@ export class DefaultFamilyFilterProvider implements FamilyFilterProvider {
 const defaultFamilyFilterProvider = new DefaultFamilyFilterProvider();
 
 /**
- * Main entry point.
+ * Applies the Family Filter to a collection of TMDB search/discover results.
+ *
+ * This is the primary filtering entry point for TMDB responses.
+ *
+ * Supports:
+ * - Search results
+ * - Discover pages
+ * - Trending
+ * - Popular
+ * - Upcoming
+ * - Mixed search results (movie, TV, person)
+ *
+ * Some TMDB endpoints include `media_type`, while others do not.
+ * If `media_type` is missing, the filter falls back to detecting
+ * movies by the presence of `title` and TV shows by the presence
+ * of `name`.
+ *
+ * Movies and TV series are filtered independently according to the
+ * configured Family Filter settings. Person results are never filtered.
  */
+// filterResults() expects complete TMDB objects.
+// This endpoint only has TMDB IDs, so we first retrieve the
+// corresponding movie/TV details before applying the filter.
 export async function filterResults<T extends TmdbResult>(
   results: T[],
   provider: FamilyFilterProvider = defaultFamilyFilterProvider
@@ -58,19 +79,17 @@ export async function filterResults<T extends TmdbResult>(
   }
 
   const filtered: T[] = [];
-  /*
-  console.log(
-      'filterResults called from:',
-      new Error().stack?.split('\n')[2]
-    );
-  */
+
   for (const item of results) {
+    // Remove adult content first.
     if (!filterAdult(item, settings)) {
       continue;
     }
 
     let allowed = true;
 
+    // Some TMDB endpoints omit media_type.
+    // Fall back to the object shape when necessary.
     if (item.media_type === 'movie' || (!item.media_type && 'title' in item)) {
       allowed = await filterMovieRatings(item, settings);
     } else if (
@@ -84,11 +103,26 @@ export async function filterResults<T extends TmdbResult>(
       filtered.push(item);
     }
   }
-  console.log(`[FamilyFilter] Returning ${filtered.length}/${results.length}`);
 
   return filtered;
 }
 
+/**
+ * Applies the Family Filter to media records that only contain
+ * TMDB IDs instead of full TMDB metadata.
+ *
+ * This helper is used by endpoints such as:
+ * - Plex Watchlist
+ * - Recently Added
+ *
+ * For each item:
+ *   1. Fetch full TMDB details.
+ *   2. Reuse the standard filterResults() pipeline.
+ *   3. Return only the media that passes the Family Filter.
+ *
+ * This keeps all filtering logic centralized in filterResults()
+ * so rating rules only need to be maintained in one place.
+ */
 export async function filterMediaByTmdbId<
   T extends {
     tmdbId: number;
@@ -115,8 +149,6 @@ export async function filterMediaByTmdbId<
 
       const allowed = await filterMovieRatings(details, settings);
 
-      console.log(`[Watchlist Movie] ${details.title} -> ${allowed}`);
-
       if (!allowed) {
         continue;
       }
@@ -129,8 +161,6 @@ export async function filterMediaByTmdbId<
 
       const allowed = await filterTvRatings(details, settings);
 
-      console.log(`[Watchlist TV] ${details.name} -> ${allowed}`);
-
       if (!allowed) {
         continue;
       }
@@ -138,8 +168,6 @@ export async function filterMediaByTmdbId<
 
     filtered.push(item);
   }
-
-  console.log(`[Watchlist Filter] ${filtered.length}/${results.length}`);
 
   return filtered;
 }
@@ -215,8 +243,6 @@ async function filterTvRatings(
   }
 
   const allowed = settings.allowedTvRatings.includes(certification);
-
-  console.log(`[TV Rating] ${item.name} ${certification} allowed=${allowed}`);
 
   return allowed;
 }
