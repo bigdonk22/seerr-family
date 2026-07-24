@@ -58,33 +58,78 @@ export async function filterResults<T extends TmdbResult>(
   }
 
   const filtered: T[] = [];
-
+  /*
+  console.log(
+      'filterResults called from:',
+      new Error().stack?.split('\n')[2]
+    );
+  */
   for (const item of results) {
-    // Adult filter
     if (!filterAdult(item, settings)) {
       continue;
     }
 
-    const mediaType = item.media_type;
+    let allowed = true;
 
-    if (mediaType === 'movie') {
-      const allowed = await filterMovieRatings(item, settings);
+    if (item.media_type === 'movie' || (!item.media_type && 'title' in item)) {
+      allowed = await filterMovieRatings(item, settings);
+    } else if (
+      item.media_type === 'tv' ||
+      (!item.media_type && 'name' in item)
+    ) {
+      allowed = await filterTvRatings(item, settings);
+    }
 
-      console.log(
-        `[Movie Filter] ${'title' in item ? item.title : item.id} -> ${allowed}`
-      );
+    if (allowed) {
+      filtered.push(item);
+    }
+  }
+  console.log(`[FamilyFilter] Returning ${filtered.length}/${results.length}`);
+
+  return filtered;
+}
+
+export async function filterMediaByTmdbId<
+  T extends {
+    tmdbId: number;
+    mediaType: 'movie' | 'tv';
+  },
+>(
+  results: T[],
+  tmdb: TheMovieDb,
+  provider: FamilyFilterProvider = defaultFamilyFilterProvider
+): Promise<T[]> {
+  const settings = provider.getSettings();
+
+  if (!settings.enabled) {
+    return results;
+  }
+
+  const filtered: T[] = [];
+
+  for (const item of results) {
+    if (item.mediaType === 'movie') {
+      const details = await tmdb.getMovie({
+        movieId: item.tmdbId,
+      });
+
+      const allowed = await filterMovieRatings(details, settings);
+
+      console.log(`[Watchlist Movie] ${details.title} -> ${allowed}`);
 
       if (!allowed) {
         continue;
       }
     }
 
-    if (mediaType === 'tv') {
-      const allowed = await filterTvRatings(item, settings);
+    if (item.mediaType === 'tv') {
+      const details = await tmdb.getTvShow({
+        tvId: item.tmdbId,
+      });
 
-      console.log(
-        `[TV Filter] ${'name' in item ? item.name : item.id} -> ${allowed}`
-      );
+      const allowed = await filterTvRatings(details, settings);
+
+      console.log(`[Watchlist TV] ${details.name} -> ${allowed}`);
 
       if (!allowed) {
         continue;
@@ -93,6 +138,8 @@ export async function filterResults<T extends TmdbResult>(
 
     filtered.push(item);
   }
+
+  console.log(`[Watchlist Filter] ${filtered.length}/${results.length}`);
 
   return filtered;
 }
