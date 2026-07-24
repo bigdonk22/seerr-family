@@ -3,16 +3,18 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
-      - main
       - parental-filter
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   docker:
+    if: github.repository_owner == 'bigdonk22'
     runs-on: ubuntu-latest
 
     steps:
