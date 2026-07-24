@@ -24,8 +24,6 @@ movieRoutes.get('/:id', async (req, res, next) => {
       language: (req.query.language as string) ?? req.locale,
     });
 
-    console.log(`[Movie Route] ${tmdbMovie.title}`);
-
     const allowed = await filterResults([
       {
         ...tmdbMovie,
@@ -34,8 +32,6 @@ movieRoutes.get('/:id', async (req, res, next) => {
     ]);
 
     if (allowed.length === 0) {
-      console.log(`[Movie Route] BLOCKED ${tmdbMovie.title}`);
-
       return res.status(404).json({
         message: 'Movie not found',
       });

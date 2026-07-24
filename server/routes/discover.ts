@@ -97,7 +97,7 @@ const ApiQuerySchema = QueryFilterOptions.omit({
 
 discoverRoutes.get('/movies', async (req, res, next) => {
   const tmdb = createTmdbWithRegionLanguage(req.user);
-  console.log('movies endpoint');
+
   try {
     const query = ApiQuerySchema.parse(req.query);
     const keywords = query.keywords;
@@ -131,13 +131,9 @@ discoverRoutes.get('/movies', async (req, res, next) => {
       certificationLte: query.certificationLte,
       certificationCountry: query.certificationCountry,
     });
-    console.log('[DISCOVER MOVIES] Before filter:', data.results.length);
+
     data.results = await filterResults(data.results);
-    console.log(
-      '[DISCOVER MOVIES] After filter:',
-      data.results.length,
-      data.results.map((m) => m.title)
-    );
+
     const media = await Media.getRelatedMedia(
       req.user,
       data.results.map((result) => ({
@@ -192,7 +188,7 @@ discoverRoutes.get<{ language: string }>(
   '/movies/language/:language',
   async (req, res, next) => {
     const tmdb = createTmdbWithRegionLanguage(req.user);
-    console.log('language endpoint');
+
     try {
       const languages = await tmdb.getLanguages();
 
@@ -252,7 +248,7 @@ discoverRoutes.get<{ genreId: string }>(
   '/movies/genre/:genreId',
   async (req, res, next) => {
     const tmdb = createTmdbWithRegionLanguage(req.user);
-    console.log('genreId endpoint');
+
     try {
       const genres = await tmdb.getMovieGenres({
         language: (req.query.language as string) ?? req.locale,
@@ -314,7 +310,7 @@ discoverRoutes.get<{ studioId: string }>(
   '/movies/studio/:studioId',
   async (req, res, next) => {
     const tmdb = new TheMovieDb();
-    console.log('studioId endpoint');
+
     try {
       const studio = await tmdb.getStudio(Number(req.params.studioId));
 
@@ -364,7 +360,7 @@ discoverRoutes.get<{ studioId: string }>(
 
 discoverRoutes.get('/movies/upcoming', async (req, res, next) => {
   const tmdb = createTmdbWithRegionLanguage(req.user);
-  console.log('upcoming endpoint');
+
   const now = new Date();
   const offset = now.getTimezoneOffset();
   const date = new Date(now.getTime() - offset * 60 * 1000)
@@ -415,7 +411,7 @@ discoverRoutes.get('/movies/upcoming', async (req, res, next) => {
 
 discoverRoutes.get('/tv', async (req, res, next) => {
   const tmdb = createTmdbWithRegionLanguage(req.user);
-  console.log('tv endpoint');
+
   try {
     const query = ApiQuerySchema.parse(req.query);
     const keywords = query.keywords;
@@ -449,9 +445,8 @@ discoverRoutes.get('/tv', async (req, res, next) => {
       certificationLte: query.certificationLte,
       certificationCountry: query.certificationCountry,
     });
-    console.log('DISCOVER TV BEFORE', data.results.length);
+
     data.results = await filterResults(data.results);
-    console.log('DISCOVER TV AFTER', data.results.length);
 
     const media = await Media.getRelatedMedia(
       req.user,
@@ -506,7 +501,7 @@ discoverRoutes.get<{ language: string }>(
   '/tv/language/:language',
   async (req, res, next) => {
     const tmdb = createTmdbWithRegionLanguage(req.user);
-    console.log('tv language endpoint');
+
     try {
       const languages = await tmdb.getLanguages();
 
@@ -566,7 +561,7 @@ discoverRoutes.get<{ genreId: string }>(
   '/tv/genre/:genreId',
   async (req, res, next) => {
     const tmdb = createTmdbWithRegionLanguage(req.user);
-    console.log('tv genreid endpoint');
+
     try {
       const genres = await tmdb.getTvGenres({
         language: (req.query.language as string) ?? req.locale,
@@ -628,7 +623,7 @@ discoverRoutes.get<{ networkId: string }>(
   '/tv/network/:networkId',
   async (req, res, next) => {
     const tmdb = new TheMovieDb();
-    console.log('tv networkid endpoint');
+
     try {
       const network = await tmdb.getNetwork(Number(req.params.networkId));
 
@@ -678,7 +673,7 @@ discoverRoutes.get<{ networkId: string }>(
 
 discoverRoutes.get('/tv/upcoming', async (req, res, next) => {
   const tmdb = createTmdbWithRegionLanguage(req.user);
-  console.log('tv upcoming endpoint');
+
   const now = new Date();
   const offset = now.getTimezoneOffset();
   const date = new Date(now.getTime() - offset * 60 * 1000)
@@ -728,7 +723,7 @@ discoverRoutes.get('/tv/upcoming', async (req, res, next) => {
 
 discoverRoutes.get('/trending', async (req, res, next) => {
   const tmdb = createTmdbWithRegionLanguage(req.user);
-  console.log('tv trending endpoint');
+
   try {
     const mediaType = (req.query.mediaType as 'all' | 'movie' | 'tv') ?? 'all';
     const timeWindow =
@@ -807,7 +802,7 @@ discoverRoutes.get<{ keywordId: string }>(
   '/keyword/:keywordId/movies',
   async (req, res, next) => {
     const tmdb = new TheMovieDb();
-    console.log('keywordid endpoint');
+
     try {
       const data = await tmdb.getMoviesByKeyword({
         keywordId: Number(req.params.keywordId),
@@ -855,7 +850,7 @@ discoverRoutes.get<{ language: string }, GenreSliderItem[]>(
   '/genreslider/movie',
   async (req, res, next) => {
     const tmdb = new TheMovieDb();
-    console.log('genreslider endpoint');
+
     try {
       const mappedGenres: GenreSliderItem[] = [];
 
@@ -899,7 +894,7 @@ discoverRoutes.get<{ language: string }, GenreSliderItem[]>(
   '/genreslider/tv',
   async (req, res, next) => {
     const tmdb = new TheMovieDb();
-    console.log('tv genreslider endpoint');
+
     try {
       const mappedGenres: GenreSliderItem[] = [];
 
@@ -951,8 +946,6 @@ discoverRoutes.get<Record<string, unknown>, WatchlistResponse>(
       where: { id: req.user?.id },
       select: ['id', 'plexToken'],
     });
-
-    console.log('watchlist endpoint');
 
     if (activeUser && !activeUser?.plexToken) {
       // Non-Plex users can only see their own watchlist
