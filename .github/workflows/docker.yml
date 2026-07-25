@@ -3,14 +3,12 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
-      - main
       - parental-filter
   workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
-  id-token: write
 
 jobs:
   docker:
@@ -18,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -27,20 +26,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository_owner }}/seerr-family
-
       - name: Build and Push
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/seerr-family:latest
-            ghcr.io/${{ github.repository_owner }}/seerr-family:${{ github.ref_name }}
+          tags: ghcr.io/${{ github.repository_owner }}/seerr-family:parental-filter
           build-args: |
             COMMIT_TAG=${{ github.sha }}
-            BUILD_VERSION=${{ github.ref_name }}
+            BUILD_VERSION=develop
