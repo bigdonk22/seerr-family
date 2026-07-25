@@ -41,3 +41,6 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/seerr-family:latest
             ghcr.io/${{ github.repository_owner }}/seerr-family:${{ github.ref_name }}
+          build-args: |
+            COMMIT_TAG=${{ github.sha }}
+            BUILD_VERSION=develop
