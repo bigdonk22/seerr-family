@@ -90,3 +90,13 @@ devenv.local.yaml
 
 # pre-commit
 .pre-commit-config.yaml
+
+config-old/
+config/logs/
+config/db/
+config/settings.json
+config/settings.old.json
+config/logs/
+config/db/
+config/settings.json
+config/settings.old.json

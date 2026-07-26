@@ -169,6 +169,8 @@ export interface FamilyFilterSettings {
   blockUnratedMovies: boolean;
   blockUnratedTv: boolean;
   allowAdult: boolean;
+  blockAsianAnimeMovies: boolean;
+  blockAsianAnimeTv: boolean;
 }
 
 export interface ProxySettings {
@@ -446,14 +448,13 @@ class Settings {
       },
       familyFilter: {
         enabled: false,
-
         allowedMovieRatings: ['G', 'PG', 'PG-13'],
-
         allowedTvRatings: ['TV-Y', 'TV-Y7', 'TV-G', 'TV-PG'],
-
         blockUnratedMovies: true,
         blockUnratedTv: true,
         allowAdult: false,
+        blockAsianAnimeMovies: false,
+        blockAsianAnimeTv: false,
       },
       plex: {
         name: '',

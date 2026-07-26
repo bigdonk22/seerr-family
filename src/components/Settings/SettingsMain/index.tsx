@@ -203,6 +203,9 @@ const SettingsMain = () => {
               blockUnratedMovies:
                 data?.familyFilter?.blockUnratedMovies ?? true,
               blockUnratedTv: data?.familyFilter?.blockUnratedTv ?? true,
+              blockAsianAnimeMovies:
+                data?.familyFilter?.blockAsianAnimeMovies ?? false,
+              blockAsianAnimeTv: data?.familyFilter?.blockAsianAnimeTv ?? false,
             },
           }}
           enableReinitialize
@@ -750,6 +753,38 @@ const SettingsMain = () => {
                       type="checkbox"
                       id="familyFilter.blockUnratedTv"
                       name="familyFilter.blockUnratedTv"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label
+                    htmlFor="familyFilter.blockAsianAnimeMovies"
+                    className="checkbox-label"
+                  >
+                    Block Asian anime movies
+                  </label>
+
+                  <div className="form-input-area">
+                    <Field
+                      type="checkbox"
+                      id="familyFilter.blockAsianAnimeMovies"
+                      name="familyFilter.blockAsianAnimeMovies"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label
+                    htmlFor="familyFilter.blockAsianAnimeTv"
+                    className="checkbox-label"
+                  >
+                    Block Asian anime series
+                  </label>
+
+                  <div className="form-input-area">
+                    <Field
+                      type="checkbox"
+                      id="familyFilter.blockAsianAnimeTv"
+                      name="familyFilter.blockAsianAnimeTv"
                     />
                   </div>
                 </div>

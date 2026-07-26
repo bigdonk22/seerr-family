@@ -43,6 +43,15 @@ export class DefaultFamilyFilterProvider implements FamilyFilterProvider {
 }
 
 const defaultFamilyFilterProvider = new DefaultFamilyFilterProvider();
+/**
+ * Filtering out all the Asian anime content, including Japanese anime, Chinese anime, and Korean anime.
+ * This is done by checking the original language of the content and filtering out any content that is in Japanese, Chinese, or Korean.
+ * The list of Asian anime languages is defined in the ASIAN_ANIME_LANGUAGES constant.
+ * 'ja', // Japanese
+ * 'zh', // Chinese
+ * 'ko', // Korean
+ */
+const ASIAN_ANIME_LANGUAGES = new Set(['ja', 'zh', 'ko']);
 
 /**
  * Applies the Family Filter to a collection of TMDB search/discover results.
@@ -90,12 +99,25 @@ export async function filterResults<T extends TmdbResult>(
 
     // Some TMDB endpoints omit media_type.
     // Fall back to the object shape when necessary.
-    if (item.media_type === 'movie' || (!item.media_type && 'title' in item)) {
-      allowed = await filterMovieRatings(item, settings);
-    } else if (
+    const isMovie =
+      item.media_type === 'movie' ||
+      (!item.media_type && 'title' in item && !('name' in item));
+
+    const isTv =
       item.media_type === 'tv' ||
-      (!item.media_type && 'name' in item)
-    ) {
+      (!item.media_type && 'name' in item && !('title' in item));
+
+    if (isMovie && settings.blockAsianAnimeMovies && isAsianAnimation(item)) {
+      continue;
+    }
+
+    if (isTv && settings.blockAsianAnimeTv && isAsianAnimation(item)) {
+      continue;
+    }
+
+    if (isMovie) {
+      allowed = await filterMovieRatings(item, settings);
+    } else if (isTv) {
       allowed = await filterTvRatings(item, settings);
     }
 
@@ -245,4 +267,31 @@ async function filterTvRatings(
   const allowed = settings.allowedTvRatings.includes(certification);
 
   return allowed;
+}
+
+/**
+ * Detects Japanese animation using TMDB metadata.
+ *
+ * Search and discover results use genre_ids, while detail responses
+ * normally use a genres array. Both forms are supported.
+ */
+function isAsianAnimation(item: TmdbResult): boolean {
+  const originalLanguage =
+    'original_language' in item && typeof item.original_language === 'string'
+      ? item.original_language
+      : null;
+
+  const hasAnimationGenre =
+    ('genre_ids' in item &&
+      Array.isArray(item.genre_ids) &&
+      item.genre_ids.includes(16)) ||
+    ('genres' in item &&
+      Array.isArray(item.genres) &&
+      item.genres.some((genre) => genre.id === 16));
+
+  if (!hasAnimationGenre || !originalLanguage) {
+    return false;
+  }
+
+  return ASIAN_ANIME_LANGUAGES.has(originalLanguage);
 }
